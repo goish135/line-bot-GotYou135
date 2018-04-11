@@ -23,9 +23,9 @@ from random import *
 app = Flask(__name__)
 
 # Channel Access Token
-line_bot_api = LineBotApi('Q/s2uzDSQrn71rDMEBcVc2idkdKfm+o6fH/9Xwapm8eD28OfPOd3oK//673gV7mv6/cgYNM2bd5Ym3AKzdwuWVZYkhY2TJIPGqYYIR9y32tYgA2jcNcIoyZTf4zXuBv39KMcWdlFVWLOrlr/rxCCvQdB04t89/1O/w1cDnyilFU=')
+line_bot_api = LineBotApi('Your Channel Access Token')
 # Channel Secret
-handler = WebhookHandler('738c0079354df45faacb5d402d0c7e6f')
+handler = WebhookHandler('Your Channel Secret')
 
 # 監聽所有來自 /callback 的 Post Request
 @app.route("/callback", methods=['POST'])
