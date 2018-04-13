@@ -23,7 +23,7 @@ from random import *
 app = Flask(__name__)
 
 # Channel Access Token
-line_bot_api = LineBotApi('Your Channel Access Token')
+line_bot_api = LineBotApi('Your Cannel Access Token')
 # Channel Secret
 handler = WebhookHandler('Your Channel Secret')
 
@@ -45,20 +45,33 @@ def callback():
 
     return 'OK'
 
+import urllib.request
+from bs4 import BeautifulSoup
+
 def get_weather():
 	quote_page = 'https://www.cwb.gov.tw/V7/forecast/taiwan/Taichung_City.htm'
 	page = urllib.request.urlopen(quote_page)
 	soup = BeautifulSoup(page,'html.parser')
 	name_box = soup.find('tbody').find_all('tr')
 	add='台中天氣:\n'
+	count  = 0
 	for tr in name_box:
 		for td in tr:
 			if td.string != None :
+				if count == 9 or count == 20 or count == 31:
+					add+='降雨機率(%):\n'
+				if count == 3 or count == 14 or count == 25:
+					add+='氣溫(度C):\n'
 				add+=td.string
+				#print(td.string)
 			elif td.string == None:
 				add+='舒適度:'
+			count = count + 1
+			#print(count)	
 		add+='/'		
 	return add
+
+#print(get_weather())
 
 def get_weather_2():
 	quote_page = 'https://www.cwb.gov.tw/V7/forecast/taiwan/Chiayi_City.htm'
@@ -88,35 +101,47 @@ def get_time_3():
 	return location
 	
 def movie():
-    target_url = 'http://www.atmovies.com.tw/movie/next/0/'
-    #print('Start parsing movie ...')
-    rs = requests.session()
-    res = rs.get(target_url, verify=False)
-    res.encoding = 'utf-8'
-    soup = BeautifulSoup(res.text, 'html.parser')
-    content = ""
-    for index, data in enumerate(soup.select('ul.filmNextListAll a')):
-        if index == 20:
-            return content
-        title = data.text.replace('\t', '').replace('\r', '')
-        link = "http://www.atmovies.com.tw" + data['href']
-        content += '{}\n{}\n'.format(title, link)
-    return content
+	source = 'http://www.atmovies.com.tw/movie/new/'
+	headers = {'User-Agent':'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) Gecko/20100101 Firefox/23.0'}  
+	req = urllib.request.Request(url=source, headers=headers)  
+	page = urllib.request.urlopen(req).read()  
 
-def joke():
-    target_url = 'http://disp.cc/b/PttHot'
-    print('Start parsing pttHot....')
-    rs = requests.session()
-    res = rs.get(target_url, verify=False)
-    soup = BeautifulSoup(res.text, 'html.parser')
-    content = ""
-    for data in soup.select('#list div.row2 div span.listTitle'):
-        title = data.text
-        link = "http://disp.cc/b/" + data.find('a')['href']
-        if data.find('a')['href'] == "796-59l9":
-            break
-        content += '{}\n{}\n\n'.format(title, link)
-    return content
+	soup = BeautifulSoup(page,'html.parser')
+
+	urls = soup.find_all('article',attrs={'class':'box post'}) 
+
+	count = 0
+	total = 0
+	hf = []
+	title = []
+	for url in urls:
+		ass=url.find_all('a',attrs={'class':'image filmListPoster'})
+		bss =url.find_all('a',attrs={'target':''})
+		for item in ass:
+			count = count + 1
+			temp = 'http://www.atmovies.com.tw'+item['href']+'\n'
+			hf.append(temp)
+		
+		
+		for it in bss:
+			total=total+1
+			tp=''.join(it.text.strip())
+			title.append(tp)
+
+		
+	css = []
+	re = 0 		
+	for i in range(1,total,3): 
+		css.append(title[i])
+		re = re + 1
+
+	reply =''
+	reply += '本週新片:\n'	
+	for j in range(0,re):		
+		reply+= css[j]+'\n'+hf[j]
+	return reply
+
+
 	
 def movie_dis():
     target_url = 'http://disp.cc/b/Movie'
@@ -152,73 +177,6 @@ def volley():
 			v = 'https://www.youtube.com/watch?v='+target+'\n'
 			vv+=v
 	return vv
-
-def menu():
-	a = '指令'
-	b = '說明'
-
-	c1 = '天氣'
-	c2 = '嘉義天氣'
-	c3 = 'go studying'
-	c4 = 'Hi'
-	c5 = 'movie'
-	c6 = 'joke'
-	c7 = 'moviemovie'
-	c8 = 'volleyball'
-
-	d1 = '台中天氣'
-	d2 = '嘉義天氣'
-	d3 = '台中教育大學圖書館開閉館時間'
-	d4 = 'Say Hi的圖片'
-	d5 = '開眼電影網之近期上映電影'
-	d6 = 'PTT有趣版'
-	d7 = 'PTT電影版'
-	d8 = '排球直播的youtube影片'
-
-	#head = '%-30s%-50s\n'%(a,b) 
-	#command_1 ='%-30s%-50s\n'%(c1,d1) 
-	#command_2 ='%-30s%-50s\n'%(c2,d2)
-	#command_3 ='%-30s%-50s\n'%(c3,d3)
-
-	head = a.ljust(35) + '\t'+ b.ljust(100)+'\n'
-	command_1 = c1.ljust(35)+'\t'+d1.ljust(100)+'\n'
-	command_2 = c2.ljust(35)+'\t'+d2.ljust(100)+'\n'
-	command_3 = c3.ljust(35)+'\t'+d3.ljust(100)+'\n'
-	command_4 = c4.ljust(35)+'\t'+d4.ljust(100)+'\n'
-	command_5 = c5.ljust(35)+'\t'+d5.ljust(100)+'\n'
-	command_6 = c6.ljust(35)+'\t'+d6.ljust(100)+'\n'
-	command_7 = c7.ljust(35)+'\t'+d7.ljust(100)+'\n'
-	command_8 = c8.ljust(35)+'\t'+d8.ljust(100)+'\n'
-	summary = head+command_1+command_2+command_3+command_4+command_5+command_6+command_7+command_8	
-	return summary
-
-def lun():
-    lista = []
-    lista.append('https://ppt.cc/f4Rufx@.jpg')
-    lista.append('https://ppt.cc/fmRhzx@.jpg')
-    lista.append('https://ppt.cc/f29mkx@.jpg')
-    lista.append('https://ppt.cc/faLYkx@.jpg')
-    lista.append('https://ppt.cc/fZhMsx@.jpg')
-    lista.append('https://ppt.cc/fBWAHx@.jpg')
-    lista.append('https://ppt.cc/fl0KGx@.jpg')
-    lista.append('https://ppt.cc/fJvdNx@.jpg')
-    lista.append('https://ppt.cc/ffPczx@.jpg')
-    lista.append('https://ppt.cc/ft8YTx@.png')
-    lista.append('https://ppt.cc/fuVIrx@.jpg')
-    lista.append('https://ppt.cc/fSFTwx@.jpg')
-    lista.append('https://ppt.cc/f60aLx@.jpg')
-    lista.append('https://ppt.cc/fwlbzx@.jpg')
-    lista.append('https://ppt.cc/fwWe0x@.jpg')
-    lista.append('https://ppt.cc/fRB3cx@.jpg')
-    lista.append('https://ppt.cc/f6fyJx@.jpg')
-    lista.append('https://ppt.cc/fpBlgx@.jpg')
-    lista.append('https://ppt.cc/fvnh6x@.jpg')
-    lista.append('https://ppt.cc/fWWBwx@.jpg')
-    x = randint(0,19)
-	#print(lista[x])
-    str=lista[x]
-	#print(type(str))
-    return str
 
 def techAI():
 	source = 'https://buzzorange.com/techorange/tag/artificialintelligence/'
@@ -262,6 +220,44 @@ def oil():
     for p in more:
         a += '  '.join(p.text.split())+'\n'
     return a
+
+def lun():
+    lista = []
+    lista.append('https://i.imgur.com/PIu3C6Z.jpg')
+    lista.append('https://i.imgur.com/RSYyfWr.jpg')
+    lista.append('https://i.imgur.com/MdXOwdw.jpg')
+    lista.append('https://i.imgur.com/cWi4c4Y.jpg')
+    lista.append('https://i.imgur.com/DT9Lo8Y.jpg')
+    lista.append('https://i.imgur.com/jt53zSO.jpg')
+    lista.append('https://i.imgur.com/CrPvatt.jpg')
+    lista.append('https://i.imgur.com/Yo9U8vY.jpg')
+    lista.append('https://i.imgur.com/iJOdaMZ.jpg')
+    lista.append('https://i.imgur.com/60fvT82.jpg')
+    lista.append('https://i.imgur.com/xBNxuRg.jpg')
+    lista.append('https://i.imgur.com/hU0LscU.jpg')
+    lista.append('https://i.imgur.com/NLaDQoY.jpg')
+    lista.append('https://i.imgur.com/22FPBNM.jpg')
+    lista.append('https://i.imgur.com/PYPWQn8.jpg')
+    lista.append('https://i.imgur.com/ucv5vIX.jpg')
+    lista.append('https://i.imgur.com/DOU3AKE.jpg')
+    lista.append('https://i.imgur.com/BCqAd8B.jpg')
+    lista.append('https://i.imgur.com/1tbTvvz.jpg')
+    lista.append('https://i.imgur.com/JFfy01q.jpg')
+    lista.append('https://i.imgur.com/X9G6jhZ.jpg')
+    lista.append('https://i.imgur.com/zrhU8Om.jpg')
+    lista.append('https://i.imgur.com/0DnuLHi.jpg')
+    lista.append('https://i.imgur.com/kqBWLzu.jpg')
+    lista.append('https://i.imgur.com/EdEYMno.jpg')
+    lista.append('https://i.imgur.com/SVI7yJj.jpg')
+    lista.append('https://i.imgur.com/IOx98DM.jpg')
+    lista.append('https://i.imgur.com/yGzKQTG.jpg')
+    lista.append('https://i.imgur.com/jBygbj0.jpg')
+    lista.append('https://i.imgur.com/K9Ihap7.jpg')
+    lista.append('https://i.imgur.com/MH7ipZ2.jpg')
+    lista.append('https://i.imgur.com/BT1Dyzn.jpg')
+    x = randint(0,31)
+    str=lista[x]
+    return str	
 	
 #def mini():
 #	Bob=''
@@ -293,8 +289,8 @@ def handle_message(event):
 			message)
 	elif event.message.text == "Hi" or event.message.text == "3":
 		message = ImageSendMessage(
-			original_content_url='https://ppt.cc/fWabhx@.png',
-			preview_image_url='https://ppt.cc/fWabhx@.png'
+			original_content_url='https://i.imgur.com/HypvDWc.png',
+			preview_image_url='https://i.imgur.com/HypvDWc.png'
 		)
 		line_bot_api.reply_message(
 			event.reply_token,
@@ -321,12 +317,13 @@ def handle_message(event):
 			message)
 	elif event.message.text == "135" or event.message.text =="@GotYou135":
 		message = ImageSendMessage(
-			original_content_url='https://ppt.cc/f7QJrx@.jpg',
-			preview_image_url='https://ppt.cc/f7QJrx@.jpg'
+			original_content_url='https://i.imgur.com/mGqK7dN.jpg',
+			preview_image_url='https://i.imgur.com/mGqK7dN.jpg'
 		)
 		line_bot_api.reply_message(
 			event.reply_token,
 			message)
+			
 	elif event.message.text == "lovely" or event.message.text=="8":
 		message = ImageSendMessage(
 			original_content_url=lun(),
@@ -349,16 +346,9 @@ def handle_message(event):
 		message = TextSendMessage(text=oil())
 		line_bot_api.reply_message(
 			event.reply_token,
-			message)			
-    			
-	#elif event.message.text == "fresh":
-        #message = ImageSendMessage(
-			#original_content_url=,
-			#preview_image_url=
-		#)
-		#line_bot_api.reply_message(
-			#event.reply_token,
-			#message)
+			message)
+
+	
 import os
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 5000))
